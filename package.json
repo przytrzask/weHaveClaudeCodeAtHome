@@ -1,0 +1,23 @@
+{
+  "name": "node-starter",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@effect/ai": "^0.26.0",
+    "@effect/ai-anthropic": "^0.16.0",
+    "@effect/cli": "^0.69.2",
+    "@effect/platform": "^0.90.6",
+    "@effect/platform-node": "^0.96.0",
+    "@total-typescript/tsconfig": "^1.0.4",
+    "dotenv": "^17.2.1",
+    "effect": "^3.17.9",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0"
+  }
+}
