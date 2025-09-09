@@ -1,3 +1,10 @@
 {
-  "extends": "@total-typescript/tsconfig/bundler/no-dom/app"
+  "extends": "@total-typescript/tsconfig/bundler/no-dom/app",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "@effect/language-service"
+      }
+    ]
+  }
 }

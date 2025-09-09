@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import { FileSystem, Path } from "@effect/platform";
-import { Effect, Console, Config, Layer, Schema, List } from "effect";
+import { Effect, Console, Config, Layer, Schema, ExecutionPlan, Schedule, Data } from "effect";
 import { Prompt } from "@effect/cli";
 import {
   NodeContext,
@@ -13,6 +13,9 @@ import { AnthropicClient, AnthropicLanguageModel } from "@effect/ai-anthropic";
 
 import { AiChat, AiTool, AiToolkit } from "@effect/ai";
 import { catchTags } from "effect/Effect";
+
+class NetworkError extends Data.TaggedError("NetworkError") {}
+class ModelError extends Data.TaggedError("ModelError") {}
 
 const ListToolInput = Schema.Struct({
   path: Schema.String.annotations({
@@ -149,13 +152,17 @@ const AnthropicLayer = AnthropicClient.layerConfig({
   apiKey: Config.redacted("ANTHROPIC_API_KEY"),
 }).pipe(Layer.provide(NodeHttpClient.layerUndici));
 
-const ClaudeLayer = AnthropicLanguageModel.model("claude-sonnet-4-20250514") //
+
+
+const ClaudeSonnet = AnthropicLanguageModel.model("claude-sonnet-4-20250514") 
   .pipe(Layer.provide(AnthropicLayer));
+
+const ClaudeSonnet37 = AnthropicLanguageModel.model("claude-3-7-sonnet-latest")
+  .pipe(Layer.provide(AnthropicLayer)); 
 
 const AppLayer = Layer.mergeAll(
   NodeContext.layer,
-
-  ClaudeLayer,
+  ClaudeSonnet,
   DangerousToolkitLayer,
 );
 
