@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import { FileSystem, Path } from "@effect/platform";
-import { Effect, Console, Config, Layer, Schema, ExecutionPlan, Schedule, Data } from "effect";
+import { Effect, Console, Config, Layer, Schema, ExecutionPlan } from "effect";
 import { Prompt } from "@effect/cli";
 import {
   NodeContext,
@@ -13,9 +13,6 @@ import { AnthropicClient, AnthropicLanguageModel } from "@effect/ai-anthropic";
 
 import { AiChat, AiTool, AiToolkit } from "@effect/ai";
 import { catchTags } from "effect/Effect";
-
-class NetworkError extends Data.TaggedError("NetworkError") {}
-class ModelError extends Data.TaggedError("ModelError") {}
 
 const ListToolInput = Schema.Struct({
   path: Schema.String.annotations({
@@ -157,13 +154,26 @@ const AnthropicLayer = AnthropicClient.layerConfig({
 const ClaudeSonnet = AnthropicLanguageModel.model("claude-sonnet-4-20250514") 
   .pipe(Layer.provide(AnthropicLayer));
 
-const ClaudeSonnet37 = AnthropicLanguageModel.model("claude-3-7-sonnet-latest")
-  .pipe(Layer.provide(AnthropicLayer)); 
+  const ClaudeSonnet37 = AnthropicLanguageModel.model("claude-3-7-sonnet-latest") 
+  .pipe(Layer.provide(AnthropicLayer));
+
+
+  const Plan = ExecutionPlan.make({
+    provide: ClaudeSonnet,
+    attempts: 1
+    
+  }, {
+    attempts: 2,
+    provide: ClaudeSonnet37,
+  })
+
+
+  const program  = Effect.withExecutionPlan(main,Plan)
+
 
 const AppLayer = Layer.mergeAll(
   NodeContext.layer,
-  ClaudeSonnet,
   DangerousToolkitLayer,
 );
 
-main.pipe(Effect.provide(AppLayer), NodeRuntime.runMain);
+program.pipe(Effect.provide(AppLayer), NodeRuntime.runMain);
