@@ -1,7 +1,15 @@
 import "dotenv/config";
 
 import { FileSystem, Path } from "@effect/platform";
-import { Effect, Console, Config, Layer, Schema, ExecutionPlan } from "effect";
+import {
+  Effect,
+  Console,
+  Config,
+  Layer,
+  Schema,
+  ExecutionPlan,
+  Stream,
+} from "effect";
 import { Prompt } from "@effect/cli";
 import {
   NodeContext,
@@ -13,6 +21,7 @@ import { AnthropicClient, AnthropicLanguageModel } from "@effect/ai-anthropic";
 
 import { AiChat, AiTool, AiToolkit } from "@effect/ai";
 import { catchTags } from "effect/Effect";
+import { runForEach } from "effect/Stream";
 
 const ListToolInput = Schema.Struct({
   path: Schema.String.annotations({
@@ -95,9 +104,7 @@ const DangerousToolkitLayer = Toolkit.toLayer(
 
           return { files: files.sort(), directories: directories.sort() };
         }).pipe(
-          Effect.catchAll((_) =>
-            Effect.succeed({ files: [], directories: [] }),
-          ),
+          Effect.catchAll(_ => Effect.succeed({ files: [], directories: [] }))
         ),
       Read: ({ path }) =>
         Effect.gen(function* () {
@@ -105,12 +112,10 @@ const DangerousToolkitLayer = Toolkit.toLayer(
           const content = yield* fs.readFileString(path);
           return { content };
         }).pipe(
-          Effect.catchAll((error) =>
-            Effect.succeed({ content: error.message }),
-          ),
+          Effect.catchAll(error => Effect.succeed({ content: error.message }))
         ),
     };
-  }),
+  })
 ).pipe(Layer.provide(NodeContext.layer));
 
 const main = Effect.gen(function* () {
@@ -127,13 +132,22 @@ const main = Effect.gen(function* () {
     let turn = 1;
     yield* Console.log(`TURN: ${turn}`);
     // text + tool calls
+    // Stream the initial response
+    yield* chat
+      .streamText({
+        prompt: input,
+        toolkit: Toolkit,
+      })
+      .pipe(Stream.runForEach(response => Console.log(response.text)));
+
+    // After streaming is done, check if we need to handle tool calls
     let response = yield* chat.generateText({
-      prompt: input,
+      prompt: [],
       toolkit: Toolkit,
     });
-    yield* Console.log(response.text);
 
     while (response.toolCalls.length > 0) {
+      console.log("tool calls", response.toolCalls);
       turn += 1;
       yield* Console.log(`TURN: ${turn}`);
       response = yield* chat.generateText({
@@ -149,31 +163,27 @@ const AnthropicLayer = AnthropicClient.layerConfig({
   apiKey: Config.redacted("ANTHROPIC_API_KEY"),
 }).pipe(Layer.provide(NodeHttpClient.layerUndici));
 
+const ClaudeSonnet = AnthropicLanguageModel.model(
+  "claude-sonnet-4-20250514"
+).pipe(Layer.provide(AnthropicLayer));
 
+const ClaudeSonnet37 = AnthropicLanguageModel.model(
+  "claude-3-7-sonnet-latest"
+).pipe(Layer.provide(AnthropicLayer));
 
-const ClaudeSonnet = AnthropicLanguageModel.model("claude-sonnet-4-20250514") 
-  .pipe(Layer.provide(AnthropicLayer));
-
-  const ClaudeSonnet37 = AnthropicLanguageModel.model("claude-3-7-sonnet-latest") 
-  .pipe(Layer.provide(AnthropicLayer));
-
-
-  const Plan = ExecutionPlan.make({
+const Plan = ExecutionPlan.make(
+  {
     provide: ClaudeSonnet,
-    attempts: 1
-    
-  }, {
+    attempts: 1,
+  },
+  {
     attempts: 2,
     provide: ClaudeSonnet37,
-  })
-
-
-  const program  = Effect.withExecutionPlan(main,Plan)
-
-
-const AppLayer = Layer.mergeAll(
-  NodeContext.layer,
-  DangerousToolkitLayer,
+  }
 );
+
+const program = Effect.withExecutionPlan(main, Plan);
+
+const AppLayer = Layer.mergeAll(NodeContext.layer, DangerousToolkitLayer);
 
 program.pipe(Effect.provide(AppLayer), NodeRuntime.runMain);

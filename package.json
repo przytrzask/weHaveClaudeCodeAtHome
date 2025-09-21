@@ -3,7 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:staged": "prettier --write --ignore-unknown",
+    "context": "tsx context.ts"
   },
   "dependencies": {
     "@effect/ai": "^0.26.0",
@@ -19,6 +23,7 @@
     "bun": "^1.2.21",
     "dotenv": "^17.2.1",
     "effect": "^3.17.13",
+    "prettier": "^3.6.2",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2"
   },
