@@ -8,7 +8,7 @@ import {
 import { Command, Options, Args } from "@effect/cli";
 
 // bash
-// # Basic usage - output files to stdout
+// # Basic usage - output files to stdouta
 // context-cli "src/**/*.ts" "*.json"
 
 // # Include a custom prompt (long option)
