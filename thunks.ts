@@ -52,5 +52,5 @@ const fetchUserNameWithRetry = retry(fetchUserName, 3);
 
 const fetchNewUserWithRetryAndFallback = catchAll(
   fetchUserNameWithRetry,
-  () => "Dada"
+  () => null
 );
