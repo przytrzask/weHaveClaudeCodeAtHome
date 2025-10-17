@@ -9,8 +9,6 @@ import {
   Option,
   Schedule,
 } from "effect";
-import { fail } from "effect/TDeferred";
-import { REPL_MODE_SLOPPY } from "node:repl";
 
 class RequestError extends Data.TaggedError("RequestError")<{
   cause: unknown;
