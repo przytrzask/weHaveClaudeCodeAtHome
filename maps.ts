@@ -54,7 +54,6 @@ Array.prototype.map = function <T, O>(
 ): Array<O> {
   const res = [];
   for (const el of this) {
-    console.log(el);
     res.push(fn(el, 1, this));
   }
 
@@ -64,3 +63,51 @@ Array.prototype.map = function <T, O>(
 const res = [1, 2, 3, 4, 5].map(el => el + 1);
 
 console.log({ res });
+
+const forEach = <T>(arr: T[], fn: (el: T, idx: number) => void) => {
+  for (const [index, el] of arr.entries()) {
+    fn(el, index);
+  }
+};
+
+forEach([1, 2, 3, 4], (el, idx) => console.log(idx));
+
+const myMap = <T, O>(arr: T[], fn: (el: T, idx: number) => O) => {
+  let resultArray: Array<O> = [];
+
+  forEach(arr, (el, idx) => resultArray.push(fn(el, idx)));
+  return resultArray;
+};
+
+// const res2 = myMap([1, 2, 3, 4], el => el + 3);
+
+const myReduce = <T, O>(arr: T[], fn: (acc: O, curr: T) => O, initial: O) => {
+  let value = initial;
+
+  myMap(arr, el => {
+    value = fn(value, el);
+  });
+
+  return value;
+};
+
+const result3 = myReduce([1, 2, 3, 4], (acc, el) => acc + el, 0);
+
+console.log({ result3 });
+
+const debounce = <T extends Array<any>, O>(
+  fn: (...args: T) => O,
+  delay: number
+) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: T) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), delay);
+  };
+};
+
+const log = (name: string) => name;
+
+const makeLog = debounce(log, 10000);
+
+console.log(makeLog("tomek"));
