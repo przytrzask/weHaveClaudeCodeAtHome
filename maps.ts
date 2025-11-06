@@ -203,3 +203,34 @@ function throttle<T extends (...args: any[]) => any>(cb: T, timeout: number) {
 }
 
 const throttled = throttle(() => console.log("nanna"), 2000);
+
+declare global {
+  interface Array<T> {
+    myMap2<O>(cb: (el: T) => O): Array<O>;
+  }
+}
+
+let obj1 = { name: "Alice" };
+let obj2 = obj1;
+obj1 = { name: "Bob" };
+
+console.log(obj2.name); // ?
+
+function flatten<T>(arr: T[]) {
+  const res = [];
+  for (const item of arr) {
+    if (Array.isArray(item)) {
+      res.push(...flatten(item));
+    } else {
+      res.push(item);
+    }
+  }
+
+  return res;
+}
+
+const arrr12 = [1, 2, 3, [4, [5]]].
+
+const res12 = flatten(arrr12);
+
+console.log(res12);

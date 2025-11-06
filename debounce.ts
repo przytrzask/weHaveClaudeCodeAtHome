@@ -28,3 +28,24 @@ const testFn = (a: number, b: number) => {
 
 debounce(testFn, 1000)(1, 2);
 debounce2(testFn, "1 second")(1, 2);
+
+// function myFunction() {
+//   return "Hello";
+// }
+
+// console.log(myFunction);
+
+sayHello(); // Works!
+
+function sayHello() {
+  console.log("Hello");
+}
+
+console.log(typeof foo);
+console.log(typeof bar);
+
+var foo = "hello";
+
+function bar() {
+  return "world";
+}

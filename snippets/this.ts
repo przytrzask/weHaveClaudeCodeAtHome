@@ -33,3 +33,21 @@ const person2 = {
 };
 
 person2.greet();
+
+class Person {
+  name: string;
+
+  constructor(name: string) {
+    this.name = name;
+  }
+
+  greet() {
+    console.log(this.name);
+  }
+}
+
+const alice = new Person("Alice1");
+const greet2 = alice.greet;
+
+alice.greet();
+// greet2();
