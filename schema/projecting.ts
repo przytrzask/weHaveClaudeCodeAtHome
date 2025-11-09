@@ -1,3 +1,4 @@
+import type { select } from "@effect/cli/Prompt";
 import {
   Effect,
   Array,
@@ -15,18 +16,22 @@ const Todo = Schema.Struct({
   title: Schema.String,
   completed: Schema.Boolean,
   created_at: Schema.DateFromString,
-});
-
-const Todo1 = Schema.transform(
-  Todo,
-  Schema.Struct({
-    title: Schema.String,
-    completed: Schema.Boolean,
-    createdAt: Schema.String,
-  }),
-  {
-    decode: input => ({ ...input, createdAt: input.created_at.toString() }),
-    encode: input => ({ ...input, created_at: new Date(input.createdAt) }),
-    strict: true,
-  }
+}).pipe(self =>
+  Schema.transform(
+    Schema.typeSchema(
+      Schema.Struct({
+        title: Schema.String,
+        completed: Schema.Boolean,
+        createdAt: Schema.String,
+      })
+    ),
+    {
+      strict: true,
+      decode: self => ({
+        ...self,
+        createdAt: self.created_at.toString(),
+      }),
+      encode: input => ({ ...input, created_at: new Date(input.createdAt) }),
+    }
+  )
 );
