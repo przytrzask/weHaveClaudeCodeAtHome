@@ -13,10 +13,12 @@ const decode = Schema.decodeSync(UserSchema);
 
 const parseUser = (user: User) => user.id;
 
-parseUser({
-  id: "asdf",
-  name: "Tomek",
-});
+// parseUser({
+//   // Type 'string' is not assignable to type 'string & Brand<"PersonId">'.
+//   // Type 'string' is not assignable to type 'Brand<"PersonId">'. (ts 2322)
+//   id: "asdf",
+//   name: "Tomek",
+// });
 
 parseUser(
   decode({
