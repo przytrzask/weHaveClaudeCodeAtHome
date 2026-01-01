@@ -1,5 +1,13 @@
 import { Console, Context, Effect, Layer, Schema } from "effect";
 
+class CurrentUser extends Context.Tag("CurrentUser")<
+  CurrentUser,
+  {
+    readonly id: string;
+    readonly email: string;
+  }
+>() {}
+
 class Database extends Effect.Service<Database>()("Database", {
   effect: Effect.gen(function* () {
     yield* Console.log("DatabaseLive created");
@@ -9,59 +17,59 @@ class Database extends Effect.Service<Database>()("Database", {
   }),
 }) {}
 
-class TodoRepository extends Context.Tag("TodoRepository")<
-  TodoRepository,
+class TodoRepository extends Effect.Service<TodoRepository>()(
+  "TodoRepository",
   {
-    readonly getTodo: (id: string) => Effect.Effect<unknown>;
-  }
->() {
-  static readonly Live = Layer.effect(
-    this,
-    Effect.gen(function* () {
+    dependencies: [Database.Default],
+    effect: Effect.gen(function* () {
       const database = yield* Database;
       return {
         getTodo: (id: string) => {
           return Effect.succeed(null);
         },
       };
-    })
-  ).pipe(Layer.provide(Database.Default));
-}
+    }),
+  }
+) {}
 
-const UserRepositoryLive = Effect.gen(function* () {
-  const database = yield* Database;
+class UserRepository extends Effect.Service<UserRepository>()(
+  "User Repository",
+  {
+    dependencies: [Database.Default],
+    effect: Effect.gen(function* () {
+      const database = yield* Database;
 
-  return {
-    getUser(id: string) {
-      return Effect.succeed({ id, name: "John Doe" });
-    },
-  };
-});
-
-class UserRepository extends Context.Tag("UserRepository")<
-  UserRepository,
-  Effect.Effect.Success<typeof UserRepositoryLive>
->() {
-  static readonly Live = Layer.effect(this, UserRepositoryLive).pipe(
-    Layer.provide(Database.Default)
-  );
-}
+      return {
+        getUser() {
+          return Effect.gen(function* () {
+            const currentUser = yield* CurrentUser;
+            return { id: currentUser, name: "John Doe" };
+          });
+        },
+      };
+    }),
+  }
+) {}
 
 const childProgram = Effect.gen(function* () {
   const userRepository = yield* UserRepository;
   const todoRepository = yield* TodoRepository;
 
-  const user = yield* userRepository.getUser("123");
+  const user = yield* userRepository.getUser();
 });
 
-const layers = Layer.merge(UserRepository.Live, TodoRepository.Live);
+const layers = Layer.merge(UserRepository.Default, TodoRepository.Default);
 
 const program = Effect.gen(function* () {
   yield* childProgram;
   const userRepository = yield* UserRepository;
 
-  const user = yield* userRepository.getUser("1234");
+  const user = yield* userRepository.getUser();
   console.log(user);
 });
 
-program.pipe(Effect.provide(layers), Effect.runPromise);
+program.pipe(
+  Effect.provideService(CurrentUser, { id: "2", email: "trzasq@trzasq.me" }),
+  Effect.provide(layers),
+  Effect.runPromise
+);
